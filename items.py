@@ -6,7 +6,7 @@ class boardItems:
 
 
 
-class obstacle:
+class obstacle(boardItems):
     def __init__(self, obst):
         self.obst = obst
 
@@ -20,7 +20,7 @@ class obstacle:
 
 
 
-class repairStation:
+class repairStation(boardItems):
     def __init__(self, obtained: bool):
             self.obtained = obtained
 
@@ -37,7 +37,7 @@ class repairStation:
         
 
 
-class repairMaterials:
+class repairMaterials(boardItems):
     def __init__(self, used: bool):
         self.used = used
 
