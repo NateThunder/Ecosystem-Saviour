@@ -1,8 +1,8 @@
 class Board:
-    def __init__(self):
+    def __init__(self,file):
         self.content = []
 
-        with open('board.txt', 'r') as f:
+        with open(file, 'r') as f:
             for line in f:
                 lines = line.strip().split(',')
                 row = []

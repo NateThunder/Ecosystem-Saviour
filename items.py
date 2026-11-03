@@ -1,4 +1,4 @@
-class boardItems:
+class BoardItem:
     def __init__(self, x: int, y: int, symbol: str):
         self.x = x
         self.y = y
@@ -6,23 +6,23 @@ class boardItems:
 
 
 
-class obstacle(boardItems):
-    def __init__(self, obst):
-        self.obst = obst
+class Forest(BoardItem):
+    def __init__(self,  x: int, y: int, type: str):
+        super().__init__(x,y, symbol=type)
+
+class Lake(BoardItem):
+    def __init__(self,  x: int, y: int, type: str):
+        super().__init__(x,y, symbol=type)
+
+class Mountain(BoardItem):
+    def __init__(self,  x: int, y: int, type: str):
+        super().__init__(x,y, symbol=type)
 
 
-    def isObstabcle(self, obj):
-        if obj in ["M","L"]:
-            return True
-
-    def __str__(self):
-        pass
-
-
-
-class repairStation(boardItems):
-    def __init__(self, obtained: bool):
-            self.obtained = obtained
+class RepairStation(BoardItem):
+    def __init__(self,  x: int, y: int, symbol: str):
+        super().__init__(x,y, symbol)
+            
 
     def pickUpItem(self):
         self.obtained = True
@@ -37,9 +37,9 @@ class repairStation(boardItems):
         
 
 
-class repairMaterials(boardItems):
-    def __init__(self, used: bool):
-        self.used = used
+class RepairMaterials(BoardItem):
+    def __init__(self, x: int, y: int, symbol: str):
+        super().__init__(x,y, symbol)
 
     def __str__(self):
         return f"Used Item?: {str(self.used)}"
