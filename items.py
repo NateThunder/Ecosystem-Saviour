@@ -4,22 +4,32 @@ class BoardItem:
         self.y = y
         self.symbol = symbol
 
+class Mountain(BoardItem):
+    def __init__(self,  x: int, y: int, symbol: str):
+        super().__init__(x,y, symbol)
+
+    def __str__(self):
+        return self.symbol
 
 
 class Forest(BoardItem):
-    def __init__(self,  x: int, y: int, type: str):
-        super().__init__(x,y, symbol=type)
+    def __init__(self,  x: int, y: int, symbol: str, health: bool):
+        super().__init__(x, y, symbol)
+        self.health = health  #  True = Healthy, False = sick
+
+    def __str__(self):
+        return self.symbol
 
 class Lake(BoardItem):
     def __init__(self,  x: int, y: int, type: str):
-        super().__init__(x,y, symbol=type)
+        super().__init__(x, y, symbol=type)
+        
+    def __str__(self):
+        return self.symbol
 
-class Mountain(BoardItem):
-    def __init__(self,  x: int, y: int, type: str):
-        super().__init__(x,y, symbol=type)
 
 
-class RepairStation(BoardItem):
+class Repair_station(BoardItem):
     def __init__(self,  x: int, y: int, symbol: str):
         super().__init__(x,y, symbol)
             
@@ -28,7 +38,7 @@ class RepairStation(BoardItem):
         self.obtained = True
 
     def __str__(self):
-        return f"Holding item?: {str(self.obtained)}"
+        return self.symbol
     
     def itemStatus(self):
         print(f"Holding item?: {str(self.obtained)}")
