@@ -12,9 +12,9 @@ def display(number_of_moves, number_of_steps):
 
 
 def show(game):
-    ui.show_board(canvas, game)
-    status.config(text=f"Points: {game.score.total}    Number of Moves left: {100 - number_of_moves}\n"
-                       f"Selected steps: {number_of_steps}    Holding repair kit: {player.repair_kit}")
+    ui.show_board(canvas, game, number_of_steps)
+    status.config(text=f"Points: {game.score.total}    Moves left: {100 - number_of_moves}    "
+                       f"Steps: {number_of_steps}    Repair kit: {'Yes' if player.repair_kit else 'No'}")
 
 
 def pressed_enter(event):
@@ -48,15 +48,13 @@ def pressed_enter(event):
 
     try:
         move_player(option)
-    except SystemExit:
+    except SystemExit as message:
         game_over = True
+        end_message = str(message)
 
     show(game)
     if game_over:
-        if len(game.Element_location("SF")) == 0:
-            status.config(text=f"You Win!! Final score: {game.score.total}\nN for New board, Q for exit")
-        else:
-            status.config(text=f"Game over! Final score: {game.score.total}\nN for New board, Q for exit")
+        ui.show_game_over(canvas, end_message, game.score.total)
 
 
 def move_player(option):
@@ -85,8 +83,12 @@ def move_player(option):
 
     for ipc in players.IPC_Locations(game):   
         ipc_distant = random.randint(1,3)
-        for distance in range(ipc_distant):
-            ipc.intelligent_move(game.objects, game, player, number_of_moves, number_of_steps)
+        target_x, target_y = ipc.closest_target(game, player)
+        ipc_direction = ipc.IPC_Direction(target_x, target_y)
+
+        if ipc_direction is not None:
+            for distance in range(ipc_distant):
+                ipc.Move(game.objects, ipc_direction, game, number_of_moves, number_of_steps)
 
 
 number_of_moves = 0
@@ -97,9 +99,6 @@ game = display(number_of_moves, number_of_steps)
 player = game.objects[0][0]
 
 window, canvas, status = ui.create_window()
-
-restart = ui.tk.Button(window, text="Restart", command=lambda: window.event_generate("<KeyPress-n>"))
-restart.pack(pady=5)
 
 show(game)
 window.bind("<Key>", pressed_enter)

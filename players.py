@@ -191,7 +191,15 @@ class Inteligent_NPC(NPC):
 
 
         if direction is not None:
+            old_x = self.x
+            old_y = self.y
             self.Move(objects, direction, game, number_of_moves, number_of_steps)
+
+            if self.x == old_x and self.y == old_y and direction in ["left", "right"]:
+                if target_y < self.y:
+                    self.Move(objects, "up", game, number_of_moves, number_of_steps)
+                elif target_y > self.y:
+                    self.Move(objects, "down", game, number_of_moves, number_of_steps)
 
  
 
@@ -230,7 +238,8 @@ def encounters_player(self, objects, direction):
     if (objects[self.y + vertical_movement][self.x + lateral_movement] is not None and 
         objects[self.y + vertical_movement][self.x + lateral_movement].symbol in ["P"]):
         print("Game Over, NPC Killed You")
-        return sys.exit(1)
+        objects[self.y][self.x] = self
+        return sys.exit("Game Over, NPC Killed You")
 
 def encounters_npc(self, objects, direction):
     lateral_movement = 0
@@ -248,7 +257,8 @@ def encounters_npc(self, objects, direction):
     if (objects[self.y + vertical_movement][self.x + lateral_movement] is not None and 
         objects[self.y + vertical_movement][self.x + lateral_movement].symbol in ["NPC", "IPC"]):
         print("Game Over, NPC Killed You")
-        return sys.exit(1)
+        objects[self.y][self.x] = self
+        return sys.exit("Game Over, NPC Killed You")
     
 
 def re_render(self, game, objects, number_of_moves, number_of_steps):
@@ -264,7 +274,7 @@ def re_render(self, game, objects, number_of_moves, number_of_steps):
     print("Number of Moves left:", move_limit - number_of_moves)
     if number_of_moves >= move_limit:
         print("Out of moves. Game over!")
-        sys.exit(1)
+        sys.exit("Out of moves. Game over!")
 
     if self.repair_kit == True:
         print("Holding repair kit") 
@@ -283,7 +293,7 @@ def re_render_npc(self, game, objects, number_of_moves, number_of_steps):
     print("Number of Moves left:", move_limit - number_of_moves)
     if number_of_moves >= move_limit:
         print("Out of moves. Game over!")
-        sys.exit(1)
+        sys.exit("Out of moves. Game over!")
 
     print(f"X={self.x}\nY={self.y}")
 
@@ -307,7 +317,8 @@ def sick_forest_location(self, game, objects, x, y):
         locations.append(location)     
     elif (x,y) in locations and self.repair_kit == False:
         print("sick forest without repair kit game over!")
-        sys.exit(1)
+        objects[self.y][self.x] = self
+        sys.exit("Sick forest without repair kit. Game over!")
     return
 
 def replace_forest(self, game, objects, x, y):
@@ -348,7 +359,7 @@ def you_win(self, game):
         game.score.total_points(2)
         print("You Win!! All forests healed, You are the Ecosystem Savior!!!")
         print("Final score:", game.score.total)
-        sys.exit(1)
+        sys.exit("You Win!! All forests healed!")
 
 def NPC_Locations(game):
     npcs = []
