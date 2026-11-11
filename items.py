@@ -11,7 +11,7 @@ class Mountain(BoardItem):
     def __str__(self):
         return self.symbol
 
-
+    
 class Forest(BoardItem):
     def __init__(self,  x: int, y: int, symbol: str, health: bool):
         super().__init__(x, y, symbol)
@@ -26,7 +26,6 @@ class Lake(BoardItem):
         
     def __str__(self):
         return self.symbol
-
 
 
 class Repair_station(BoardItem):

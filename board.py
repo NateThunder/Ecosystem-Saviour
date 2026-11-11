@@ -1,11 +1,13 @@
 import items
 import players
 import random
+from scoring import Score
 
 class Board:
     def __init__(self,file):
         self.content = []
         self.objects = [[None for x in range(8)] for y in range(8)]
+        self.score = Score()
 
         with open(file, 'r') as f:
             for line in f:
@@ -25,7 +27,6 @@ class Board:
 # Showing locations of all elements on the board
     def Board_map(self):
         self.locations = []
-        elements = ["HF","SF","M","R","L"]
         for y, line in enumerate(self.content):
             for x, symbol in enumerate(line):
                 if symbol == "M":
@@ -70,7 +71,6 @@ class Board:
         self.objects[Inteligent_NPC_location_y][Inteligent_NPC_location_x] = players.Inteligent_NPC(Inteligent_NPC_location_x, Inteligent_NPC_location_y, "IPC")        
 
 
-
 # Showing location of spceific element on the board
     def Element_location(self, element):
         locations = []
@@ -80,13 +80,13 @@ class Board:
                 if symbol == element.upper():
                     
                     locations.append((x,y))
-                    #print(f"{symbol}[{x}][{y}]")
-
-        print(f"{element.upper()}: {locations}")
+        return locations
 
 
 
-
+    def game_state(self, game_over: bool):
+        self.game_over = game_over
+        
 
 #======= print each line one by one ========================== 
     def __str__(self):
@@ -94,12 +94,13 @@ class Board:
         for line in self.objects:
             for item in line:
                 if item is None:
-                    grid += "-" + " "
+                    grid += "-" + "   "
                 else:
-                    grid += item.symbol + " "
+                    grid += item.symbol + " "*(4 - len(str(item)))
             grid += "\n"
-
         return grid
+
+
 
     def printBoard(self):
         for i in self.content:
