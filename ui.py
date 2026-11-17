@@ -1,4 +1,5 @@
 import tkinter as tk
+import settings
 from pathlib import Path
 
 def load_sprite(canvas, path, width, height, keep_aspect=False, crop=None):
@@ -41,25 +42,76 @@ def load_tile_images(canvas, square_size):
     return images
 
 
-def create_window():
+def create_window(on_board=None):
     window = tk.Tk()
     window.title("Ecosystem Saviour")
     window.config(bg="#203e48")
 
-    create_controls(window)
+    # This canvas scrolls the whole interface. The game has its own canvas below.
+    scroll_area = tk.Frame(window, bg="#203e48")
+    scroll_area.pack(fill="both", expand=True)
+    scroll_area.rowconfigure(0, weight=1)
+    scroll_area.columnconfigure(0, weight=1)
 
-    window.score_status = tk.Label(window, bg="#203e48", fg="white",
+    window.scroll_canvas = tk.Canvas(scroll_area, bg="#203e48",
+                                     highlightthickness=0)
+    window.scroll_canvas.grid(row=0, column=0, sticky="nsew")
+
+    vertical = tk.Scrollbar(scroll_area, orient="vertical",
+                            command=window.scroll_canvas.yview)
+    vertical.grid(row=0, column=1, sticky="ns")
+    horizontal = tk.Scrollbar(scroll_area, orient="horizontal",
+                              command=window.scroll_canvas.xview)
+    horizontal.grid(row=1, column=0, sticky="ew")
+    window.scroll_canvas.config(yscrollcommand=vertical.set,
+                                xscrollcommand=horizontal.set)
+
+    content = tk.Frame(window.scroll_canvas, bg="#203e48")
+    window.scroll_canvas.create_window(0, 0, window=content, anchor="nw")
+    content.bind("<Configure>", lambda event: update_scroll_area(window))
+    window.bind("<MouseWheel>", lambda event: scroll_window(event, window))
+
+    if settings.BOARD_SELECTOR_ENABLED and on_board is not None:
+        create_board_selector(window, content, on_board)
+
+    create_controls(content)
+
+    window.score_status = tk.Label(content, bg="#203e48", fg="white",
                                     font=("Arial", 12, "bold"))
     window.score_status.pack(pady=(2, 4))
 
-    canvas = tk.Canvas(window, width=480, height=480,
+    canvas = tk.Canvas(content, width=480, height=480,
                        borderwidth=0, relief="flat",
                        highlightthickness=0)
     canvas.pack(padx=20, pady=(4, 0))
 
-    create_bottom_panel(window)
+    create_bottom_panel(window, content)
+
+    # Start at the full interface size, or smaller when the screen cannot fit it.
+    window.update_idletasks()
+    width = min(content.winfo_reqwidth() + vertical.winfo_reqwidth(),
+                max(200, window.winfo_screenwidth() - 80))
+    height = min(content.winfo_reqheight() + horizontal.winfo_reqheight(),
+                 max(200, window.winfo_screenheight() - 120))
+    window.geometry(f"{width}x{height}")
 
     return window, canvas, window.score_status
+
+
+def update_scroll_area(window):
+    window.scroll_canvas.config(scrollregion=window.scroll_canvas.bbox("all"))
+
+
+def scroll_window(event, window):
+    # Do not scroll when the full interface already fits in the window.
+    top, bottom = window.scroll_canvas.yview()
+    if top == 0 and bottom == 1:
+        return
+
+    if event.delta > 0:
+        window.scroll_canvas.yview_scroll(-1, "units")
+    elif event.delta < 0:
+        window.scroll_canvas.yview_scroll(1, "units")
 
 
 def create_controls(window):
@@ -68,9 +120,7 @@ def create_controls(window):
     groups = [
         (["N"], "New board"),
         (["Q"], "Quit"),
-        (["1"], "1 step"),
-        (["2"], "2 steps"),
-        (["3"], "3 steps"),
+        *[([str(step)], f"{step} steps") for step in settings.STEP_OPTIONS],
         (["W", "A", "S", "D"], "Move"),
     ]
     for keys, description in groups:
@@ -84,19 +134,19 @@ def create_controls(window):
                  font=("Arial", 8)).pack(side="left", padx=(3, 0))
 
 
-def create_bottom_panel(window):
+def create_bottom_panel(window, content):
     background = "#203e48"
     panel_colour = "#d8e7df"
     text_colour = "#203e38"
 
-    panel = tk.Frame(window, bg=background, padx=10, pady=4)
+    panel = tk.Frame(content, bg=background, padx=10, pady=4)
     panel.pack()
 
     legend = tk.Frame(panel, bg=panel_colour, padx=8, pady=6,
                       highlightbackground="black", highlightthickness=3)
     tk.Label(legend, text="TILES & ENTITIES", bg=panel_colour,
              fg=text_colour, font=("Arial", 9, "bold"), anchor="w").grid(
-                 row=0, column=0, columnspan=4, sticky="w", pady=(0, 4))
+                 row=0, column=0, columnspan=6, sticky="w", pady=(0, 4))
 
     sprite_directory = Path(__file__).resolve().parent / "sprites"
     entries = [
@@ -106,8 +156,8 @@ def create_bottom_panel(window):
         ("HF  Healthy forest", "Pixel-Art Forest Clearing.png", 1, 2),
         ("SF  Sick forest", "Diseased Gnarled Forest Clearing.png", 2, 2),
         ("M  Mountain", "Pixel-Art Mountain Tile.png", 3, 2),
-        ("L  Lake", "Pixel-Art Lake with Grassy Shore.png", 4, 2),
-        ("R  Repair station", "Pixel-Art Tree Care Workshop Stall.png", 5, 2),
+        ("L  Lake", "Pixel-Art Lake with Grassy Shore.png", 1, 4),
+        ("R  Repair station", "Pixel-Art Tree Care Workshop Stall.png", 2, 4),
     ]
     for text, filename, row, column in entries:
         image = load_sprite(legend, sprite_directory / filename, 22, 22,
@@ -160,12 +210,13 @@ def show_game_over(canvas, message, score):
 def show_board(canvas, game, number_of_steps):
     canvas.delete("all")
     square_size = 60
+    canvas.config(width=len(game.objects[0]) * square_size, height=len(game.objects) * square_size)
     # Keep references on the canvas so Tk retains the images between redraws.
     if not hasattr(canvas, "tile_images"):
         canvas.tile_images = load_tile_images(canvas, square_size)
     if not hasattr(canvas, "player_image"):
         sprite_path = (Path(__file__).resolve().parent / "sprites" /
-                       "Forest Ranger Standing.png")
+                       settings.CHARACTERS[settings.CHARACTER]["sprite"])
         canvas.player_image = load_sprite(canvas, sprite_path, 56, 54,
                                           keep_aspect=True)
     if not hasattr(canvas, "npc_image"):
@@ -221,3 +272,33 @@ def show_board(canvas, game, number_of_steps):
                                    fill=player_colours[item.symbol], outline="white", width=2)
                 canvas.create_text(left + 30, top + 38, text=item.symbol,
                                    fill="white", font=("Arial", 10, "bold"))
+
+
+def create_settings_menu(window, on_difficulty, on_character, on_leaderboard):
+    menu = tk.Menu(window)
+    options = tk.Menu(menu, tearoff=False)
+    difficulty = tk.StringVar(window, value=settings.DIFFICULTY)
+    character = tk.StringVar(window, value=settings.CHARACTER)
+    for name in settings.DIFFICULTIES:
+        options.add_radiobutton(label=name.title(), variable=difficulty, value=name,
+                               command=lambda value=name: on_difficulty(value))
+    options.add_separator()
+    for name in settings.CHARACTERS:
+        options.add_radiobutton(label=name, variable=character, value=name,
+                               command=lambda value=name: on_character(value))
+    menu.add_cascade(label="Settings (starts a new game)", menu=options)
+    if settings.LEADERBOARD_ENABLED:
+        menu.add_command(label="Leaderboard", command=on_leaderboard)
+    window.config(menu=menu)
+    window.settings_variables = (difficulty, character)
+
+
+def create_board_selector(window, content, on_board):
+    panel = tk.Frame(content, bg="#203e48")
+    panel.pack(pady=4)
+    tk.Label(panel, text="Board (starts a new game):", bg="#203e48",
+             fg="white").pack(side="left", padx=4)
+    window.board_choice = tk.StringVar(window, value=settings.BOARD)
+    selector = tk.OptionMenu(panel, window.board_choice, *settings.BOARDS,
+                             command=on_board)
+    selector.pack(side="left")

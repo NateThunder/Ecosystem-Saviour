@@ -1,123 +1,123 @@
 # Ecosystem Saviour progress
 
-This checklist reflects the current code. Update it as you build and check each feature.
+Last updated: 12 November 2026.
 
-## To do
+This checklist reflects the current code. Checked items mean implemented; full gameplay testing is still outstanding unless explicitly recorded below.
 
-### A — Finish board setup
+## A - Board setup and objects
 
-- [X]  Create an 8×8 setup file in `board.txt`.
-- [X]  Read comma-separated board rows from a file.
-- [X]  Store the file values in `Board.content`, using `None` for empty squares.
-- [X]  Create an 8×8 `Board.objects` grid.
-- [X]  Define `BoardItem` with position and symbol attributes.
-- [X]  Define mountain, lake, forest, and repair-station classes using inheritance.
-- [X]  Store healthy/sick state on forest objects.
-- [X]  Create board-item objects through `Board_map()` and store them at `[y][x]`.
-- [X]  Find and print coordinates for a chosen board-item code.
-- [X]  Add basic textual display methods for the board rows.
-- [X]  Define player, ordinary NPC, and intelligent NPC classes.
-- [X]  Write a small manual test script for board creation and forest locations.
-- [X]  Create the player at `(0, 0)` and store the player object in `Board.objects[0][0]`.
-- [X]  Create two ordinary NPCs and one intelligent NPC on random valid free squares, avoiding the player and each other.
-- [X]  Check `board.txt` is 8 rows of 8 values and contains 4 mountains, 4 lakes, 5 healthy forests, 3 sick forests, and 3 repair stations.
+- [X] Read comma-separated rows from board.txt, using None for empty squares.
+- [X] Create Board.content and Board.objects, indexed using [y][x].
+- [X] Define BoardItem and subclasses for mountains, lakes, forests and repair stations.
+- [X] Define Player, NPC and Inteligent_NPC classes using inheritance.
+- [X] Create the player at (0, 0).
+- [X] Place configured enemy counts on distinct random empty squares.
+- [X] Reject empty or uneven board rows and insufficient enemy spawn space.
+- [X] Configure columns and rows with BOARD_SIZE_X and BOARD_SIZE_Y; crop or extend the map with empty squares, and use the resulting grid for movement boundaries.
+- [X] Find terrain coordinates using Element_location() and display the board using __str__().
+- [ ] Validate unknown map symbols and the player's starting square.
 
-### B — Textual board display
+## B - Player and enemy movement
 
-- [X]  Display the object grid through `__str__()` and `print(game1)`, showing board-item symbols and `-` for empty squares.
-- [X]  Include the player (`P`), two ordinary NPCs (`NPC`), and intelligent NPC (`IPC`) in the display.
-- [X]  Make sure the display reflects changes to the game objects.
+- [X] Handle WASD and existing U/C/L/R aliases in controller.py.
+- [X] Select player movement distance using settings.STEP_OPTIONS, currently 1, 2 or 3.
+- [X] Block mountains, lakes and movement beyond board edges.
+- [X] Choose an ordinary NPC's random direction and movement distance each turn.
+- [X] Use settings enemy_steps for both enemy types.
+- [X] Block enemies from entering other enemy squares and repair stations.
+- [X] Target the nearest healthy forest or player with the intelligent NPC.
+- [X] Move the intelligent NPC towards that target in the GUI controller.
+- [ ] Check edge, obstacle, intermediate-step and collision behaviour through complete gameplay.
+- [ ] Review blocked-step handling: loops currently keep attempting remaining steps.
+- [ ] Review intelligent movement: controller.py chooses a direction once per turn; the alternative intelligent_move() helper is not called there.
 
-`Board_map()` creates and places the objects; `__str__()` reads `Board.objects` to build the display. `printBoard()` reads `Board.content`, which now also records forest repairs. Repair logic updates the forest symbol and health together. Full movement/display checking remains open; the previous `you_win` argument mismatch has been corrected.
+## C - Forests, materials and scoring
 
-### C — Player movement
+- [X] Track the player's repair kit and collect it at a repair station.
+- [X] Set the starting kit from the selected character.
+- [X] Implement healing, kit consumption and settings.HEAL_POINTS.
+- [X] Implement settings.WIN_BONUS when no sick forests remain.
+- [X] Record repaired and polluted forests in game.content.
+- [X] Create polluted forests with health=False.
+- [X] Restore forests and repair stations after actors leave their squares.
+- [ ] Check complete repair and pollution routes, including terrain hidden under actors.
+- [ ] Check kit consumption, points and the completion bonus in full gameplay.
 
-- [X]  Add one-square movement behaviour to `Player.Move()` in `players.py` (code reviewed; interactive behaviour not tested).
-- [X]  Handle WASD movement with a selected distance of 1-3 in the text controller (code reviewed; interactive checking remains). The student reports that the lecturer accepts WASD instead of the brief's example controls.
-- [X]  Allow `q` to quit (code reviewed; interactive behaviour not tested).
-- [X]  Prototype one-square movement with W/A/S/D in `test.py`, updating player coordinates and the object grid.
-- [X]  Add board-edge checks to the movement prototype (code reviewed; interactive behaviour not tested).
-- [X]  Stop one-square movement before mountains and lakes (code reviewed; interactive behaviour not tested).
-- [X]  Add restoration helpers for repair stations and healthy forests, including repaired forests (previous helper checks passed; complete movement still needs checking).
+## D - Turns and game over
 
-### D — Ordinary NPC movement
+- [X] Count movement commands and display remaining moves using the chosen difficulty.
+- [X] Implement collision loss, sick-forest loss, move-limit loss and victory messages.
+- [X] Catch SystemExit in the GUI controller and show the final score on the board.
+- [X] Reset moves, step selection, score and game-over state on a new game.
+- [X] Support N, the Restart button and Q.
+- [ ] Check both actors moving into each other for both enemy types.
+- [ ] Review final-turn timing: the move limit is checked during redraw after individual steps, so it can interrupt a multi-step command before enemies move.
 
-- [X]  Choose a random direction and distance from 1 to 3 for each ordinary NPC (code reviewed; full interactive checking remains).
-- [X]  Move ordinary NPCs one square at a time with edge and mountain/lake checks (code reviewed). Terrain preservation and NPC overlap still need checking.
+## E - Tkinter interface
 
-### E — Materials and forest interactions
+- [X] Draw terrain and characters using PNG sprites.
+- [X] Connect keyboard input to movement and redraw the board after commands.
+- [X] Display points, remaining moves, selected steps and repair-kit status.
+- [X] Add a Restart button and tiles/entities legend.
+- [X] Arrange the legend in three columns with 3, 3 and 2 items; Lake and Repair station are on the right.
+- [X] Add vertical and horizontal scrollbars around the whole interface.
+- [X] Add mouse-wheel scrolling and choose an initial window size based on the screen.
+- [X] Add optional difficulty and character menu choices; selecting one starts a new game.
 
-- [X]  Store whether the player carries materials in `Player.repair_kit`.
-- [X]  Initialise `self.repair_kit = False` in `Player.__init__()`.
-- [X]  Add collection logic that sets `repair_kit` to `True` on entering R, keeping one bag if already carrying it (code reviewed; not interactively tested).
-- [ ]  Repair a sick forest when carrying materials, consume the materials, and add 1 point.
-- [X]  Preserve materials when entering a healthy forest (code reviewed; not interactively tested).
-- [ ]  Award the 2-point bonus for repairing all sick forests.
-- [ ]  Make a polluter turn a healthy forest sick when entering its square.
+## F - Settings and leaderboard
 
-### F — Turns and game over
+- [X] Add settings.py for map path, difficulties, characters, step choices and scoring.
+- [X] Configure move limit, random enemy count, intelligent enemy count and enemy movement range per difficulty.
+- [X] Add Ranger and Medic choices; Medic starts with a repair kit and currently shares the Ranger sprite.
+- [X] Generate menu choices from the difficulty and character dictionaries.
+- [X] Add SETTINGS_BAR_ENABLED to show or hide the menu bar.
+- [X] Add LEADERBOARD_ENABLED to control score recording and the leaderboard menu entry.
+- [X] Save completed wins and losses in leaderboard.txt using open(), loops, split() and write(); the game no longer uses JSON.
+- [X] Preserve the existing score when converting to the text format.
+- [X] Rank by highest score, then fewest moves, and keep the configured number of entries.
+- [X] Store name, score, moves, difficulty, character, result and date.
+- [X] Add EXAM_PRACTICE.md with possible changes based on the course notes and the relevant files.
 
-- [X]  Add a movement-command counter and display 20 minus the count (code reviewed; turn-limit behaviour still needs checking).
-- [ ]  Complete collision handling for both NPC types and for either actor moving onto the other. Player movement onto either `NPC` or `IPC` exits the program. Ordinary NPC movement now checks for `P` before each step in all four directions and exits on collision. IPC movement is not yet implemented; deterministic collision checking remains.
-- [X]  Add immediate exit when entering a sick forest without materials (helper checked; full game integration still needs checking).
-- [ ]  End at the turn limit and report the score.
+Current defaults: standard difficulty (20 moves, two ordinary NPCs, one intelligent NPC, enemy steps 1-3), Ranger, 1 point per healed forest and a 2-point win bonus. SETTINGS_BAR_ENABLED and LEADERBOARD_ENABLED are both False. Restart the program after editing settings.py. To show the leaderboard menu, enable both switches. Existing scores remain saved when disabled.
 
-### G — Intelligent NPC
+## G - Organisation and practical-test preparation
 
-- [ ]  Add movement towards healthy forests or the player using the NPC subclass.
+- [X] Use only Python Standard Library modules.
+- [X] Keep new work close to the student's existing style, using straightforward functions and text files.
+- [X] Guard controller startup with if __name__ == "__main__" so importing it does not launch the GUI.
+- [ ] Separate remaining terminal display calls from movement logic in players.py.
+- [ ] Consider replacing SystemExit game-over signals with a game-specific exception or return value.
+- [ ] Review names, comments and unused imports/variables.
+- [ ] Practise explaining and changing each class, method and setting.
+- [ ] Add focused automated gameplay checks for boundaries, repairs, pollution and game-over rules.
 
-### H — Organisation and checking
+## Checks completed during this session
 
-- [ ]  Keep game state and rules in the Model, display in the View, and input handling in the Controller.
-- [ ]  Review names, comments, and unused variables as the code develops.
-- [ ]  Check movement at edges, obstacles, and intermediate squares.
-- [ ]  Check materials, forest changes, scoring, and each game-over condition.
-- [ ]  Practise explaining what each class and method does.
-- [ ]  Use only Python Standard Library modules.
+- Python syntax parsing and importing controller without launching the game.
+- Enemy spawn counts for Easy, Normal and Hard.
+- Ranger and Medic starting repair-kit values.
+- Rectangular map construction.
+- Leaderboard text save/load, score ordering and ties; earlier leaderboard-disable check also passed.
+- Existing score conversion from JSON to text.
+- Tkinter window and settings-menu construction.
+- Small-window scrolling, mouse wheel over the board, reaching the bottom, horizontal scrolling and the restart key.
+- Window construction after the legend layout change.
+- Import and settings checks after disabling the menu bar and leaderboard.
 
-### I and J — Tkinter GUI, after the textual game works
-
-- [ ]  Draw the board using images.
-- [ ]  Add mouse or keyboard movement input.
-- [ ]  Connect GUI input and display to the existing game model.
-
-## Latest review - 10 November 2026
-
-Reviewed `test.py`, `players.py`, `board.py`, and `items.py`. This update records code inspection, not a complete interactive test or a mark estimate.
-
-### New progress
-
-- `NPC_Locations(game)` scans `game.objects` and returns actual ordinary NPC objects rather than coordinates. Its standalone function signature is corrected.
-- The controller loops over those objects, chooses one random direction and distance of 1-3 for each, and calls `npc.Move(...)` once per requested step.
-- `NPC.Move()` clears its previous grid square, checks boundaries and fixed obstacles, changes coordinates, and stores the NPC in the resulting square.
-- NPC movement calls `encounters_player()` before each permitted step in all four directions. The player symbol check now correctly uses uppercase `P`.
-- Player movement still checks for both `NPC` and `IPC` before each step.
-- `re_render_npc()` displays the board without accessing the player-only `repair_kit` attribute.
-- Pollution now records `SF` in `game.content`; sick-forest restoration creates a forest with `health=False`. These changes were reviewed in code, not interactively tested.
-
-### Current issues and remaining work
-
-- Pollution now updates `game.content`, so newly polluted forest locations are recorded for restoration. In the saved file, `healthy_forest_location()` still creates `Forest(x, y, "SF", True)`; change the health argument to `False`. `replace_sick_forest()` already uses `False`. Check an NPC entering and leaving a healthy forest before marking pollution complete.
-- NPC movement now blocks squares containing `NPC` or `IPC`, preventing direct overwriting of other NPCs (code reviewed; not interactively tested). The student has chosen to block repair stations (`R`) too. The brief does not explicitly settle NPC entry into repair stations; record this as a design choice, not a confirmed requirement or a required correction.
-- Player repair updates symbol, health, and content and consumes materials, but complete repair routes still need checking. No repair points or completion bonus are implemented.
-- `NPC_Locations()` currently includes only `NPC`, so IPC stays still. The intelligent subclass exists but has no targeting behaviour yet.
-- The student reports that the lecturer accepts WASD instead of the brief's example controls. Keep the chosen WASD mapping; it is not an outstanding correction. Input currently selects distance before direction.
-- Both movement loops keep attempting steps after a blocked step, rather than explicitly ending that movement request.
-- Turn-limit checks run during redraw after each step. Turn 20 can therefore end a multi-step player command after its first step and before NPC movement.
-- N creates a board without resetting turns or selected distance.
-- `you_win()` exits when no sick forests remain; the required 2-point bonus is not implemented. Game-over messages do not report a score.
-- The final NPC redraw shows NPC coordinates and clears the player's repair-kit message.
-- Model and View are still mixed: movement methods call terminal redraw and game-over helpers exit the program directly. Input is handled in `test.py` as the Controller.
-- The non-Windows input branch references `sys`, `termios`, and `tty` without importing them in `test.py`.
-- No Tkinter GUI is implemented in the reviewed files.
+These were targeted checks, not a complete interactive playthrough or a complete automated test suite. test.py and test2.py remain older interactive prototypes.
 
 ## Current focus
 
-- [ ]  Keep forest symbol, health, and `game.content` consistent when an NPC pollutes a forest.
-- [ ]  Check an NPC entering and leaving healthy and sick forests. Check that repair stations remain blocked under the chosen design.
-- [ ]  Check ordinary NPC movement onto the player from each direction and on an intermediate step.
-- [ ]  Check that an NPC attempting to enter another NPC's square stops without either NPC disappearing; blocking checks are now present.
-- [ ]  Check player repair routes, then add scoring and the completion bonus.
-- [ ]  Finish blocked-step handling, complete-turn timing, and new-game reset. WASD controls are accepted according to the lecturer clarification reported by the student.
-- [ ]  Add intelligent movement after ordinary NPC behaviour is understood and checked.
-- [ ]  Continue the textual game before starting the GUI.
+- [ ] Play through repair, pollution, collision, victory and move-limit scenarios.
+- [ ] Resolve final-turn timing and blocked-step behaviour if required by the brief.
+- [ ] Check that terrain and actors remain consistent throughout movement.
+- [ ] Practise the changes listed in EXAM_PRACTICE.md while keeping the code understandable and close to the student's style.
+
+## Multiple boards - 12 November 2026
+
+- [X] Add board1.txt through board4.txt; Board 1 copies the original map, which remains in board.txt.
+- [X] Choose the default with BOARD in settings.py and list map files in BOARDS.
+- [X] Use board_file() to resolve the selected map when starting a game.
+- [X] Add an independent BOARD_SELECTOR_ENABLED switch for the in-game dropdown, currently True.
+- [X] Start a new game when selecting another board; the selector works with SETTINGS_BAR_ENABLED=False.
+- Board size settings still apply to every map. Menu selections last for the current run; edit BOARD for the permanent default.

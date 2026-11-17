@@ -1,19 +1,22 @@
 from board import Board
 import players
 import ui
+import settings
+import leaderboard
+from tkinter import messagebox
 
 import random
 
 
 def display(number_of_moves, number_of_steps):
-    game = Board("board.txt")
+    game = Board(settings.board_file())
     game.Board_map()
     return game
 
 
 def show(game):
     ui.show_board(canvas, game, number_of_steps)
-    status.config(text=f"Points: {game.score.total}    Moves left: {100 - number_of_moves}    "
+    status.config(text=f"Points: {game.score.total}    Moves left: {settings.difficulty()["move_limit"] - number_of_moves}    "
                        f"Steps: {number_of_steps}    Repair kit: {'Yes' if player.repair_kit else 'No'}")
 
 
@@ -27,18 +30,13 @@ def pressed_enter(event):
         return
 
     elif option == "N":
-        number_of_moves = 0
-        number_of_steps = 1
-        game_over = False
-        game = display(number_of_moves, number_of_steps)
-        player = game.objects[0][0]
-        show(game)
+        new_game()
         return
 
     if game_over:
         return
 
-    if option in ["1", "2", "3"]:
+    if option in [str(step) for step in settings.STEP_OPTIONS]:
         number_of_steps = int(option)
         show(game)
         return
@@ -51,6 +49,11 @@ def pressed_enter(event):
     except SystemExit as message:
         game_over = True
         end_message = str(message)
+        if settings.LEADERBOARD_ENABLED:
+            try:
+                leaderboard.record(settings.PLAYER_NAME, game.score.total, number_of_moves, end_message)
+            except (OSError, ValueError) as error:
+                messagebox.showerror("Leaderboard", str(error), parent=window)
 
     show(game)
     if game_over:
@@ -75,14 +78,14 @@ def move_player(option):
             player.Move(game.objects, "right", game, number_of_moves, number_of_steps)
 
     for npc in players.NPC_Locations(game):
-        npc_distant = random.randint(1,3)
+        npc_distant = random.randint(*settings.difficulty()["enemy_steps"])
         npc_directtion = random.choice(["down","left","up","right"])
 
         for distance in range(npc_distant):
             npc.Move(game.objects, npc_directtion, game, number_of_moves, number_of_steps)
 
     for ipc in players.IPC_Locations(game):   
-        ipc_distant = random.randint(1,3)
+        ipc_distant = random.randint(*settings.difficulty()["enemy_steps"])
         target_x, target_y = ipc.closest_target(game, player)
         ipc_direction = ipc.IPC_Direction(target_x, target_y)
 
@@ -91,15 +94,53 @@ def move_player(option):
                 ipc.Move(game.objects, ipc_direction, game, number_of_moves, number_of_steps)
 
 
-number_of_moves = 0
-number_of_steps = 1
-game_over = False
+def new_game():
+    global game, player, number_of_moves, number_of_steps, game_over
+    number_of_moves = 0
+    number_of_steps = settings.STEP_OPTIONS[0]
+    game_over = False
+    game = display(number_of_moves, number_of_steps)
+    player = game.objects[0][0]
+    show(game)
 
-game = display(number_of_moves, number_of_steps)
-player = game.objects[0][0]
 
-window, canvas, status = ui.create_window()
+def change_board(value):
+    settings.BOARD = value
+    new_game()
+    window.focus_set()
 
-show(game)
-window.bind("<Key>", pressed_enter)
-window.mainloop()
+
+def change_difficulty(value):
+    settings.DIFFICULTY = value
+    new_game()
+
+
+def change_character(value):
+    settings.CHARACTER = value
+    if hasattr(canvas, "player_image"):
+        del canvas.player_image
+    new_game()
+
+
+def show_leaderboard():
+    try:
+        rows = leaderboard.load()
+        text = "\n".join(f"{rank}. {row['name']} - {row['score']} points ({row['difficulty']}, {row['moves']} moves)"
+                         for rank, row in enumerate(rows, 1))
+        messagebox.showinfo("Leaderboard", text or "No completed games yet.", parent=window)
+    except (OSError, ValueError) as error:
+        messagebox.showerror("Leaderboard", str(error), parent=window)
+
+
+def main():
+    global window, canvas, status
+    window, canvas, status = ui.create_window(change_board)
+    if settings.SETTINGS_BAR_ENABLED:
+        ui.create_settings_menu(window, change_difficulty, change_character, show_leaderboard)
+    new_game()
+    window.bind("<Key>", pressed_enter)
+    window.mainloop()
+
+
+if __name__ == "__main__":
+    main()

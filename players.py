@@ -1,6 +1,7 @@
 from items import BoardItem
 from scoring import Score
 import board
+import settings
 import items
 import subprocess, os, sys, random
 
@@ -9,7 +10,7 @@ import subprocess, os, sys, random
 class Player(BoardItem):
     def __init__(self, x: int, y: int, symbol: str):
         super().__init__(x,y,symbol)
-        self.repair_kit = False
+        self.repair_kit = settings.CHARACTERS[settings.CHARACTER]["starts_with_kit"]
 
     def __str__(self):
         return self.symbol
@@ -42,7 +43,7 @@ class Player(BoardItem):
         #    number_of_moves -= 1
 
         # Move Right
-        elif direction == "right" and self.x < 7 and (
+        elif direction == "right" and self.x < len(objects[0]) - 1 and (
                         objects[self.y][self.x + 1] is None or 
                         objects[self.y][self.x + 1].symbol not in ["L", "M"]):
             
@@ -50,7 +51,7 @@ class Player(BoardItem):
             encounters_npc(self, objects, direction)
 
             #No moves past the wall
-            if self.x >= 7:
+            if self.x >= len(objects[0]) - 1:
                 number_of_moves -= 1
 
             self.x += 1
@@ -76,14 +77,14 @@ class Player(BoardItem):
             use_repair_kit(self, objects, game) 
 
         # Move Down
-        elif direction == "down" and self.y < 7 and (
+        elif direction == "down" and self.y < len(objects) - 1 and (
                         objects[self.y + 1][self.x] is None or 
                         objects[self.y + 1][self.x ].symbol not in ["L", "M"]):
             #  Encounter NPC
             encounters_npc(self, objects, direction)
 
             #No moves past the wall
-            if self.y >= 7:
+            if self.y >= len(objects) - 1:
                 number_of_moves -= 1
 
             self.y += 1 
@@ -118,12 +119,12 @@ class NPC(BoardItem):
             #No moves past the wall
             self.x -= 1
 
-        elif direction == "right" and self.x < 7 and (
+        elif direction == "right" and self.x < len(objects[0]) - 1 and (
                         objects[self.y][self.x + 1] is None or 
                         objects[self.y][self.x + 1].symbol not in ["L", "M","NPC","IPC","R"]):
             encounters_player(self, objects, direction)
             #No moves past the wall
-            if self.x >= 7:
+            if self.x >= len(objects[0]) - 1:
                 number_of_moves -= 1
             self.x += 1   
 
@@ -137,12 +138,12 @@ class NPC(BoardItem):
             self.y -= 1
 
         # Move Down
-        elif direction == "down" and self.y < 7 and (
+        elif direction == "down" and self.y < len(objects) - 1 and (
                         objects[self.y + 1][self.x] is None or 
                         objects[self.y + 1][self.x ].symbol not in ["L", "M","NPC","IPC","R"]):
             encounters_player(self, objects, direction)
             #No moves past the wall
-            if self.y >= 7:
+            if self.y >= len(objects) - 1:
                 number_of_moves -= 1
             self.y += 1 
 
@@ -218,7 +219,7 @@ def use_repair_kit(self, objects, game):
         objects[self.y][self.x].symbol = "HF"
         objects[self.y][self.x].health = True
         game.content[self.y][self.x] = "HF"
-        game.score.total_points(1)
+        game.score.total_points(settings.HEAL_POINTS)
     else:
         return self.repair_kit
 
@@ -270,7 +271,7 @@ def re_render(self, game, objects, number_of_moves, number_of_steps):
     print(game)
     print("Points:", game.score.total)
     #print(number_of_steps,"steps")
-    move_limit = 100
+    move_limit = settings.difficulty()["move_limit"]
     print("Number of Moves left:", move_limit - number_of_moves)
     if number_of_moves >= move_limit:
         print("Out of moves. Game over!")
@@ -289,7 +290,7 @@ def re_render_npc(self, game, objects, number_of_moves, number_of_steps):
     print("Points:", game.score.total)
     print(game)
     print(number_of_steps,"steps")
-    move_limit = 100
+    move_limit = settings.difficulty()["move_limit"]
     print("Number of Moves left:", move_limit - number_of_moves)
     if number_of_moves >= move_limit:
         print("Out of moves. Game over!")
@@ -356,7 +357,7 @@ def you_win(self, game):
         locations.append(location)
 
     if len(locations) == 0:
-        game.score.total_points(2)
+        game.score.total_points(settings.WIN_BONUS)
         print("You Win!! All forests healed, You are the Ecosystem Savior!!!")
         print("Final score:", game.score.total)
         sys.exit("You Win!! All forests healed!")

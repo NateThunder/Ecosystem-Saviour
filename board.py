@@ -1,12 +1,12 @@
 import items
 import players
 import random
+import settings
 from scoring import Score
 
 class Board:
     def __init__(self,file):
         self.content = []
-        self.objects = [[None for x in range(8)] for y in range(8)]
         self.score = Score()
 
         with open(file, 'r') as f:
@@ -21,6 +21,26 @@ class Board:
                         row.append(value)
 
                 self.content.append(row)
+        if not self.content or not self.content[0] or any(len(row) != len(self.content[0]) for row in self.content):
+            raise ValueError("Board must be a non-empty rectangle")
+        if (type(settings.BOARD_SIZE_X) is not int or
+            type(settings.BOARD_SIZE_Y) is not int or
+            settings.BOARD_SIZE_X < 1 or settings.BOARD_SIZE_Y < 1):
+            raise ValueError("Board X and Y sizes must be positive whole numbers")
+
+        # Keep the top-left part of the map and fill extra squares with None.
+        content = []
+        for y in range(settings.BOARD_SIZE_Y):
+            row = []
+            for x in range(settings.BOARD_SIZE_X):
+                if y < len(self.content) and x < len(self.content[0]):
+                    row.append(self.content[y][x])
+                else:
+                    row.append(None)
+            content.append(row)
+        self.content = content
+        self.objects = [[None for value in row] for row in self.content]
+
 
 
 
@@ -56,19 +76,14 @@ class Board:
 
 
         # mapping NPC and inteligent NPC ==================================
-        free_square_amount = len(free_square) -1
+        enemy_types = ([players.NPC] * settings.difficulty()["npc_count"] +
+                       [players.Inteligent_NPC] * settings.difficulty()["ipc_count"])
+        if len(enemy_types) > len(free_square):
+            raise ValueError("Not enough empty squares for the configured enemies")
+        for enemy_type, (x, y) in zip(enemy_types, random.sample(free_square, len(enemy_types))):
+            symbol = "IPC" if enemy_type is players.Inteligent_NPC else "NPC"
+            self.objects[y][x] = enemy_type(x, y, symbol)
 
-        npc1_location = random.randint(0, free_square_amount)
-        npc1_location_x, npc1_location_y = free_square[npc1_location]
-        self.objects[npc1_location_y][npc1_location_x] = players.NPC(npc1_location_x, npc1_location_y, "NPC")
-
-        npc2_location = random.choice([n for n in range(0, free_square_amount + 1) if n != npc1_location])
-        npc2_location_x, npc2_location_y = free_square[npc2_location]
-        self.objects[npc2_location_y][npc2_location_x] = players.NPC(npc2_location_x, npc2_location_y, "NPC")
-
-        Inteligent_NPC_location = random.choice([n for n in range(0, free_square_amount + 1) if n not in [npc1_location, npc2_location]])
-        Inteligent_NPC_location_x, Inteligent_NPC_location_y = free_square[Inteligent_NPC_location]
-        self.objects[Inteligent_NPC_location_y][Inteligent_NPC_location_x] = players.Inteligent_NPC(Inteligent_NPC_location_x, Inteligent_NPC_location_y, "IPC")        
 
 
 # Showing location of spceific element on the board
