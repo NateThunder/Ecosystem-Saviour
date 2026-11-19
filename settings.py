@@ -15,7 +15,7 @@ BOARDS = {
 # Smaller sizes crop the map; larger sizes add empty squares.
 BOARD_SIZE_X = 8
 BOARD_SIZE_Y = 8
-DIFFICULTY = "easy"
+DIFFICULTY = "standard"
 DIFFICULTIES = {
     "easy": {"move_limit": 150, "npc_count": 1, "ipc_count": 0, "enemy_steps": (1, 2)},
     "normal": {"move_limit": 100, "npc_count": 2, "ipc_count": 1, "enemy_steps": (1, 3)},
